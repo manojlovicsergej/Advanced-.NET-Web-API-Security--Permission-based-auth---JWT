@@ -18,20 +18,21 @@ public class ApplicationDbSeeder
         _userManager = userManager;
     }
 
-    public async Task SeedDatabaseAsync(CancellationToken cancellationToken)
+    public async Task SeedDatabaseAsync()
     {
         // Check for pending and apply if any
-        await CheckAndApplyPendingMigrationAsync(cancellationToken);
+        await CheckAndApplyPendingMigrationAsync();
         // Seed roles
         await SeedRolesAsync();
         // Seed user (Admin)
+        await SeedAdminUserAsync();
     }
 
-    private async Task CheckAndApplyPendingMigrationAsync(CancellationToken cancellationToken)
+    private async Task CheckAndApplyPendingMigrationAsync()
     {
         if (_dbContext.Database.GetPendingMigrations().Any())
         {
-            await _dbContext.Database.MigrateAsync(cancellationToken);
+            await _dbContext.Database.MigrateAsync();
         }
     }
 
@@ -83,6 +84,37 @@ public class ApplicationDbSeeder
 
                 await _dbContext.SaveChangesAsync();
             }
+        }
+    }
+
+    private async Task SeedAdminUserAsync()
+    {
+        string adminUserName = AppCredentials.Email[..AppCredentials.Email.IndexOf('@')].ToLowerInvariant();
+        var adminUser = new ApplicationUser
+        {
+            FirstName = "Sergej",
+            LastName = "Manojlovic",
+            Email = AppCredentials.Email,
+            UserName = adminUserName,
+            EmailConfirmed = true,
+            PhoneNumberConfirmed = true,
+            NormalizedEmail = AppCredentials.Email.ToUpperInvariant(),
+            NormalizedUserName = adminUserName.ToUpperInvariant(),
+            IsActive = true
+        };
+
+        if (!await _userManager.Users.AnyAsync(x => x.Email == AppCredentials.Email))
+        {
+            var password = new PasswordHasher<ApplicationUser>();
+            adminUser.PasswordHash = password.HashPassword(adminUser, AppCredentials.DefaultPassword);
+            await _userManager.CreateAsync(adminUser);
+        }
+        
+        // Assign role to user
+        if (!await _userManager.IsInRoleAsync(adminUser, AppRoles.Basic) &&
+            !await _userManager.IsInRoleAsync(adminUser, AppRoles.Admin))
+        {
+            await _userManager.AddToRolesAsync(adminUser, AppRoles.DefaultRoles);
         }
     }
 }
