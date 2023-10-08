@@ -29,10 +29,10 @@ public class AppPermissions
         new(AppFeature.RoleClaims, AppAction.Update, AppRoleGroup.SystemAccess, "Update Role Claims/Permissions"),
         new(AppFeature.RoleClaims, AppAction.Read, AppRoleGroup.SystemAccess, "View Role  Claims/Permissions"),
         
-        new(AppFeature.Employees, AppAction.Create, AppRoleGroup.SystemAccess, "Create Employees"),
-        new(AppFeature.Employees, AppAction.Update, AppRoleGroup.SystemAccess, "Update Employees"),
-        new(AppFeature.Employees, AppAction.Delete, AppRoleGroup.SystemAccess, "Delete Employees"),
-        new(AppFeature.Employees, AppAction.Read, AppRoleGroup.SystemAccess, "Read Employees", IsBasic:true),
+        new(AppFeature.Employees, AppAction.Create, AppRoleGroup.ManagementHierarchy, "Create Employees"),
+        new(AppFeature.Employees, AppAction.Update, AppRoleGroup.ManagementHierarchy, "Update Employees"),
+        new(AppFeature.Employees, AppAction.Delete, AppRoleGroup.ManagementHierarchy, "Delete Employees"),
+        new(AppFeature.Employees, AppAction.Read, AppRoleGroup.ManagementHierarchy, "Read Employees", IsBasic:true),
     };
 
     public static IReadOnlyList<AppPermission> AdminPermissions { get; } = new ReadOnlyCollection<AppPermission>(_all.Where(p => !p.IsBasic).ToArray());
