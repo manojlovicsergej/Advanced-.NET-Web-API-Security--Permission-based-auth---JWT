@@ -1,4 +1,6 @@
-﻿using Infrastructure.Context;
+﻿using Application.Services.Identity;
+using Infrastructure.Context;
+using Infrastructure.Services.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -13,5 +15,10 @@ public static class ServiceCollectionExtensions
             .UseSqlServer(configuration.GetConnectionString("DefaultConnection"), b=> b.MigrationsAssembly(("WebApi"))))
             .AddTransient<ApplicationDbSeeder>();
         return services;
+    }
+
+    public static IServiceCollection AddIdentityServices(this IServiceCollection services)
+    {
+        return services.AddTransient<ITokenService, TokenService>();
     }
 }
