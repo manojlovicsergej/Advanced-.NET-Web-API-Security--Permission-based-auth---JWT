@@ -17,13 +17,5 @@
       <PackageReference Include="MediatR" Version="11.1.0" />
       <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
       <PackageReference Include="Nuget.Console.Package" Version="1.0.0" />
-    <ItemGroup>
-      <Folder Include="Features\Employees\Queries\" />
     </ItemGroup>
-
-    </ItemGroup>
-
-
-
-
 </Project>

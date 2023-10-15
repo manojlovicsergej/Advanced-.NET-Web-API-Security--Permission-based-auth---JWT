@@ -12,6 +12,7 @@ builder.Services.AddIndentitySettings();
 builder.Services.AddApplicationService();
 builder.Services.AddJwtAuthentication(builder.Services.GetApplicationSettings(builder.Configuration));
 builder.Services.AddIdentityServices();
+builder.Services.AddEmployeeService();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.RegisterSwagger();
 
