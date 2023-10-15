@@ -24,6 +24,8 @@ public class ApplicationDbSeeder
         await CheckAndApplyPendingMigrationAsync();
         // Seed roles
         await SeedRolesAsync();
+        // Seed basic user
+        await SeedBasicUserAsync();
         // Seed user (Admin)
         await SeedAdminUserAsync();
     }
@@ -115,6 +117,35 @@ public class ApplicationDbSeeder
             !await _userManager.IsInRoleAsync(adminUser, AppRoles.Admin))
         {
             await _userManager.AddToRolesAsync(adminUser, AppRoles.DefaultRoles);
+        }
+    }
+
+    private async Task SeedBasicUserAsync()
+    {
+        var basicUser = new ApplicationUser
+        {
+            FirstName = "Petar",
+            LastName = "Petrovic",
+            Email = "petarp@abc.com",
+            UserName = "petarp",
+            EmailConfirmed = true,
+            PhoneNumberConfirmed = true,
+            NormalizedEmail = "PETARP@ABC.COM",
+            NormalizedUserName = "PETARP",
+            IsActive = true
+        };
+
+        if (!await _userManager.Users.AnyAsync(u => u.Email == "petarp@abc.com"))
+        {
+            var password = new PasswordHasher<ApplicationUser>();
+            basicUser.PasswordHash = password.HashPassword(basicUser, AppCredentials.DefaultPassword);
+            await _userManager.CreateAsync(basicUser);
+        }
+
+        // Assign role to user
+        if (!await _userManager.IsInRoleAsync(basicUser, AppRoles.Basic))
+        {
+            await _userManager.AddToRoleAsync(basicUser, AppRoles.Basic);
         }
     }
 }
