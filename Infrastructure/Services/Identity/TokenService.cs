@@ -5,6 +5,7 @@ using System.Text;
 using Application.AppConfigs;
 using Application.Services.Identity;
 using Common.Requests;
+using Common.Requests.Identity;
 using Common.Responses;
 using Common.Responses.Wrappers;
 using Infrastructure.Models;

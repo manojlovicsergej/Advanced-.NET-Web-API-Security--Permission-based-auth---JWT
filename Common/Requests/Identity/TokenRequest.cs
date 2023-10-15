@@ -1,4 +1,4 @@
-﻿namespace Common.Requests;
+﻿namespace Common.Requests.Identity;
 
 public class TokenRequest
 {

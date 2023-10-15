@@ -14,14 +14,17 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddDatabase(this IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContext<ApplicationDbContext>(options => options
-            .UseSqlServer(configuration.GetConnectionString("DefaultConnection"), b=> b.MigrationsAssembly(("WebApi"))))
+                .UseSqlServer(configuration.GetConnectionString("DefaultConnection"),
+                    b => b.MigrationsAssembly(("WebApi"))))
             .AddTransient<ApplicationDbSeeder>();
         return services;
     }
 
     public static IServiceCollection AddIdentityServices(this IServiceCollection services)
     {
-        return services.AddTransient<ITokenService, TokenService>();
+        return services
+            .AddTransient<ITokenService, TokenService>()
+            .AddTransient<IUserService, UserService>();
     }
 
     public static IServiceCollection AddEmployeeService(this IServiceCollection services)
