@@ -1,6 +1,8 @@
 ﻿using Application.Services.Identity;
+using AutoMapper;
 using Common.Authorization;
 using Common.Requests.Identity;
+using Common.Responses.Identity;
 using Common.Responses.Wrappers;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
@@ -10,10 +12,12 @@ namespace Infrastructure.Services.Identity;
 public class UserService : IUserService
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IMapper _mapper;
 
-    public UserService(UserManager<ApplicationUser> userManager)
+    public UserService(UserManager<ApplicationUser> userManager, IMapper mapper)
     {
         _userManager = userManager;
+        _mapper = mapper;
     }
     
     public async Task<IResponseWrapper> RegisterUserAsync(UserRegistrationRequest request, CancellationToken cancellationToken)
@@ -56,5 +60,17 @@ public class UserService : IUserService
         }
         
         return await ResponseWrapper<string>.FailAsync("User registration failed.");
+    }
+
+    public async Task<IResponseWrapper> GetUserByIdAsync(string userId)
+    {
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null)
+        { 
+            return await ResponseWrapper.FailAsync("User does not exist.");
+        }
+
+        return await ResponseWrapper<UserResponse>.SuccessAsync(_mapper.Map<UserResponse>(user));
     }
 }

@@ -1,4 +1,5 @@
-﻿using Application.Services;
+﻿using System.Reflection;
+using Application.Services;
 using Application.Services.Identity;
 using Infrastructure.Context;
 using Infrastructure.Services;
@@ -30,5 +31,10 @@ public static class ServiceCollectionExtensions
     public static IServiceCollection AddEmployeeService(this IServiceCollection services)
     {
         return services.AddTransient<IEmployeeService, EmployeeService>();
+    }
+
+    public static void AddInfractureDependencies(this IServiceCollection services)
+    {
+        services.AddAutoMapper(Assembly.GetExecutingAssembly());
     }
 }
