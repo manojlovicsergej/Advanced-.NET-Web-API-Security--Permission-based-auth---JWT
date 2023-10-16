@@ -108,4 +108,23 @@ public class UserService : IUserService
 
         return await ResponseWrapper.FailAsync("Failed to update user details.");
     }
+
+    public async Task<IResponseWrapper> ChangeUserPasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(request.UserId);
+
+        if (user is null)
+        {
+            return await ResponseWrapper.FailAsync("User not found!");
+        }
+
+        var identityResult = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
+        
+        if (identityResult.Succeeded)
+        {
+            return await ResponseWrapper<string>.SuccessAsync("User password successfully updated!");
+        }
+        
+        return await ResponseWrapper.FailAsync("Failed to update user password.");
+    }
 }
