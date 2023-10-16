@@ -20,8 +20,9 @@ public class UserService : IUserService
         _userManager = userManager;
         _mapper = mapper;
     }
-    
-    public async Task<IResponseWrapper> RegisterUserAsync(UserRegistrationRequest request, CancellationToken cancellationToken)
+
+    public async Task<IResponseWrapper> RegisterUserAsync(UserRegistrationRequest request,
+        CancellationToken cancellationToken)
     {
         var user = await _userManager.FindByEmailAsync(request.Email);
 
@@ -36,7 +37,7 @@ public class UserService : IUserService
         {
             return await ResponseWrapper.FailAsync("Username already taken.");
         }
-        
+
         var newUser = new ApplicationUser
         {
             FirstName = request.FirstName,
@@ -47,19 +48,19 @@ public class UserService : IUserService
             IsActive = request.ActivateUser,
             EmailConfirmed = request.AutoConfirmEmail
         };
-        
+
         var password = new PasswordHasher<ApplicationUser>();
         newUser.PasswordHash = password.HashPassword(newUser, request.Password);
-        
+
         var userResult = await _userManager.CreateAsync(newUser);
-        
+
         if (userResult.Succeeded)
         {
             //Assigning a role
             await _userManager.AddToRoleAsync(newUser, AppRoles.Basic);
             return await ResponseWrapper<string>.SuccessAsync("User registered successfully.");
         }
-        
+
         return await ResponseWrapper<string>.FailAsync("User registration failed.");
     }
 
@@ -68,7 +69,7 @@ public class UserService : IUserService
         var user = await _userManager.FindByIdAsync(userId);
 
         if (user is null)
-        { 
+        {
             return await ResponseWrapper.FailAsync("User does not exist.");
         }
 
@@ -109,7 +110,8 @@ public class UserService : IUserService
         return await ResponseWrapper.FailAsync("Failed to update user details.");
     }
 
-    public async Task<IResponseWrapper> ChangeUserPasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken)
+    public async Task<IResponseWrapper> ChangeUserPasswordAsync(ChangePasswordRequest request,
+        CancellationToken cancellationToken)
     {
         var user = await _userManager.FindByIdAsync(request.UserId);
 
@@ -119,12 +121,37 @@ public class UserService : IUserService
         }
 
         var identityResult = await _userManager.ChangePasswordAsync(user, request.CurrentPassword, request.NewPassword);
-        
+
         if (identityResult.Succeeded)
         {
             return await ResponseWrapper<string>.SuccessAsync("User password successfully updated!");
         }
-        
+
         return await ResponseWrapper.FailAsync("Failed to update user password.");
+    }
+
+    public async Task<IResponseWrapper> ChangeUserStatusAsync(ChangeUserStatusRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(request.UserId);
+
+        if (user is null)
+        {
+            return await ResponseWrapper.FailAsync("User not found!");
+        }
+
+        user.IsActive = request.Activate;
+        var identityResult = await _userManager.UpdateAsync(user);
+
+        if (identityResult.Succeeded)
+        {
+            return await ResponseWrapper<string>.SuccessAsync(request.Activate
+                ? "User activated successfully!"
+                : "User de-activated successfully");
+        }
+        
+        return await ResponseWrapper.FailAsync(request.Activate
+            ? "Failed to activate user!"
+            : "Failed to de-activate user");
     }
 }

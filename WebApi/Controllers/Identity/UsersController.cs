@@ -43,6 +43,18 @@ public class UsersController : MyBaseController<UsersController>
 
         return NotFound(response);
     }
+    
+    [HttpPut("change-status")]
+    public async Task<IActionResult> ChangeUserStatus([FromBody] ChangeUserStatusRequest changeUserStatus)
+    {
+        var response = await MediatorSender.Send(new ChangeUserStatusCommand() { ChangeUserStatusRequest = changeUserStatus });
+        if (response.IsSuccessful)
+        {
+            return Ok(response);
+        }
+
+        return NotFound(response);
+    }
 
     [HttpGet("{userId}")]
     public async Task<IActionResult> GetUserById(string userId)

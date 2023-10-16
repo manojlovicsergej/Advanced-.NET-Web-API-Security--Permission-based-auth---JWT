@@ -10,4 +10,5 @@ public interface IUserService
     Task<IResponseWrapper> GetAllUsersAsync(CancellationToken cancellationToken);
     Task<IResponseWrapper> UpdateUserAsync(UpdateUserRequest request, CancellationToken cancellationToken);
     Task<IResponseWrapper> ChangeUserPasswordAsync(ChangePasswordRequest request, CancellationToken cancellationToken);
+    Task<IResponseWrapper> ChangeUserStatusAsync(ChangeUserStatusRequest request, CancellationToken cancellationToken);
 }
