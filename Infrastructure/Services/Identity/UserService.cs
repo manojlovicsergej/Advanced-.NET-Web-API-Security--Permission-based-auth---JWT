@@ -13,11 +13,13 @@ namespace Infrastructure.Services.Identity;
 public class UserService : IUserService
 {
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly RoleManager<ApplicationRole> _roleManager;
     private readonly IMapper _mapper;
 
-    public UserService(UserManager<ApplicationUser> userManager, IMapper mapper)
+    public UserService(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IMapper mapper)
     {
         _userManager = userManager;
+        _roleManager = roleManager;
         _mapper = mapper;
     }
 
@@ -151,6 +153,36 @@ public class UserService : IUserService
         }
         
         return await ResponseWrapper.FailAsync(GetIdentityResultErrorDescriptions(identityResult));
+    }
+
+    public async Task<IResponseWrapper> GetRolesAsync(string userId, CancellationToken cancellationToken)
+    {
+        var userRoles = new List<UserRoleViewModel>();
+        var user = await _userManager.FindByIdAsync(userId);
+
+        if (user is null)
+        {
+            return await ResponseWrapper.FailAsync("User does not exist.");    
+        }
+
+        var allRoles = await _roleManager.Roles.ToListAsync(cancellationToken);
+        foreach (var role in allRoles)
+        {
+            var userRoleVM = new UserRoleViewModel
+            {
+                RoleName = role.Name,
+                RoleDescription = role.Description
+            };
+            
+            if (await _userManager.IsInRoleAsync(user, role.Name))
+            {
+                userRoleVM.IsAssignedToUser = true;
+            }
+            
+            userRoles.Add(userRoleVM);
+        }
+
+        return await ResponseWrapper<List<UserRoleViewModel>>.SuccessAsync(userRoles);
     }
 
     private List<string> GetIdentityResultErrorDescriptions(IdentityResult identityResult)

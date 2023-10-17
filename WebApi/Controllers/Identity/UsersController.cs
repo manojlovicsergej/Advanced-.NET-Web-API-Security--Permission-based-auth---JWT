@@ -79,4 +79,16 @@ public class UsersController : MyBaseController<UsersController>
 
         return NotFound(response);
     }
+    
+    [HttpGet("roles/{userId}")]
+    public async Task<IActionResult> GetRoles(string userId)
+    {
+        var response = await MediatorSender.Send(new GetRolesQuery() { UserId = userId });
+        if (response.IsSuccessful)
+        {
+            return Ok(response);
+        }
+
+        return NotFound(response);
+    }
 }
