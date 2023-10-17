@@ -52,16 +52,16 @@ public class UserService : IUserService
         var password = new PasswordHasher<ApplicationUser>();
         newUser.PasswordHash = password.HashPassword(newUser, request.Password);
 
-        var userResult = await _userManager.CreateAsync(newUser);
+        var identityResult = await _userManager.CreateAsync(newUser);
 
-        if (userResult.Succeeded)
+        if (identityResult.Succeeded)
         {
             //Assigning a role
             await _userManager.AddToRoleAsync(newUser, AppRoles.Basic);
             return await ResponseWrapper<string>.SuccessAsync("User registered successfully.");
         }
 
-        return await ResponseWrapper<string>.FailAsync("User registration failed.");
+        return await ResponseWrapper.FailAsync(GetIdentityResultErrorDescriptions(identityResult));
     }
 
     public async Task<IResponseWrapper> GetUserByIdAsync(string userId)
@@ -107,7 +107,7 @@ public class UserService : IUserService
             return await ResponseWrapper<string>.SuccessAsync("User details successfully updated!");
         }
 
-        return await ResponseWrapper.FailAsync("Failed to update user details.");
+        return await ResponseWrapper.FailAsync(GetIdentityResultErrorDescriptions(identityResult));
     }
 
     public async Task<IResponseWrapper> ChangeUserPasswordAsync(ChangePasswordRequest request,
@@ -127,7 +127,7 @@ public class UserService : IUserService
             return await ResponseWrapper<string>.SuccessAsync("User password successfully updated!");
         }
 
-        return await ResponseWrapper.FailAsync("Failed to update user password.");
+        return await ResponseWrapper.FailAsync(GetIdentityResultErrorDescriptions(identityResult));
     }
 
     public async Task<IResponseWrapper> ChangeUserStatusAsync(ChangeUserStatusRequest request,
@@ -150,8 +150,17 @@ public class UserService : IUserService
                 : "User de-activated successfully");
         }
         
-        return await ResponseWrapper.FailAsync(request.Activate
-            ? "Failed to activate user!"
-            : "Failed to de-activate user");
+        return await ResponseWrapper.FailAsync(GetIdentityResultErrorDescriptions(identityResult));
+    }
+
+    private List<string> GetIdentityResultErrorDescriptions(IdentityResult identityResult)
+    {
+        var errorDescriptions = new List<string>();
+        foreach (var error in identityResult.Errors)
+        {
+            errorDescriptions.Add(error.Description);            
+        }
+
+        return errorDescriptions;
     }
 }
