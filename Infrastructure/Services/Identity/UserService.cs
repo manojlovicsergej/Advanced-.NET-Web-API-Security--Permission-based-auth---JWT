@@ -14,12 +14,14 @@ public class UserService : IUserService
 {
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly RoleManager<ApplicationRole> _roleManager;
+    private readonly ICurrentUserService _currentUserService;
     private readonly IMapper _mapper;
 
-    public UserService(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IMapper mapper)
+    public UserService(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, ICurrentUserService currentUserService, IMapper mapper)
     {
         _userManager = userManager;
         _roleManager = roleManager;
+        _currentUserService = currentUserService;
         _mapper = mapper;
     }
 
@@ -183,6 +185,50 @@ public class UserService : IUserService
         }
 
         return await ResponseWrapper<List<UserRoleViewModel>>.SuccessAsync(userRoles);
+    }
+
+    public async Task<IResponseWrapper> UpdateUserRolesAsync(UpdateUserRolesRequest request, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByIdAsync(request.UserId);
+
+        if (user is null)
+        {
+            return await ResponseWrapper.FailAsync("User does not exist.");
+        }
+
+        if (user.Email == AppCredentials.Email)
+        {
+            return await ResponseWrapper.FailAsync("User Roles update not permitted.");
+        }
+
+        var roles = await _userManager.GetRolesAsync(user);
+        var rolesToBeAssigned = request.Roles
+            .Where(x => x.IsAssignedToUser)
+            .ToList();
+
+        var currentLoggedInUser = await _userManager.FindByIdAsync(_currentUserService.UserId);
+        
+        if (currentLoggedInUser is null)
+        {
+            return await ResponseWrapper.FailAsync("User does not exist.");
+        }
+
+        if (await _userManager.IsInRoleAsync(currentLoggedInUser, AppRoles.Admin))
+        {
+            var identityResult = await _userManager.RemoveFromRolesAsync(user, roles);
+            if (identityResult.Succeeded)
+            {
+                var idResult = await _userManager.AddToRolesAsync(user, rolesToBeAssigned.Select(x => x.RoleName));
+                if (idResult.Succeeded)
+                {
+                    return await ResponseWrapper<string>.SuccessAsync("User Roles Updated Successfully.");
+                }
+
+                return await ResponseWrapper.FailAsync(GetIdentityResultErrorDescriptions(idResult));
+            }
+            return await ResponseWrapper.FailAsync(GetIdentityResultErrorDescriptions(identityResult));
+        }
+        return await ResponseWrapper.FailAsync("User Roles update not permitted.");
     }
 
     private List<string> GetIdentityResultErrorDescriptions(IdentityResult identityResult)
