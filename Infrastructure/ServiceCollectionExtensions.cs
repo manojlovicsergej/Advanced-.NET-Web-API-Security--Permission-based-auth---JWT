@@ -26,6 +26,7 @@ public static class ServiceCollectionExtensions
         return services
             .AddTransient<ITokenService, TokenService>()
             .AddTransient<IUserService, UserService>()
+            .AddTransient<IRoleService, RoleService>()
             .AddHttpContextAccessor()
             .AddScoped<ICurrentUserService, CurrentUserService>();
     }

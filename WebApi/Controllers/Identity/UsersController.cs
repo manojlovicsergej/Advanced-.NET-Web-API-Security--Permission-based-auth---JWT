@@ -2,6 +2,7 @@
 using Application.Features.Identity.Queries;
 using Common.Authorization;
 using Common.Requests.Identity;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WebApi.Attributes;
 
@@ -11,7 +12,7 @@ namespace WebApi.Controllers.Identity;
 public class UsersController : MyBaseController<UsersController>
 {
     [HttpPost]
-    [MustHavePermission(AppFeature.Users,AppAction.Create)]
+    [AllowAnonymous]
     public async Task<IActionResult> RegisterUser([FromBody] UserRegistrationRequest userRegistration)
     {
         var response = await MediatorSender.Send(new UserRegistrationCommand { userRegistration = userRegistration });
@@ -37,7 +38,7 @@ public class UsersController : MyBaseController<UsersController>
     }
     
     [HttpPut("change-password")]
-    [MustHavePermission(AppFeature.Users,AppAction.Update)]
+    [AllowAnonymous]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest changePasswordRequest)
     {
         var response = await MediatorSender.Send(new ChangeUserPasswordCommand() { ChangePasswordRequest = changePasswordRequest });
