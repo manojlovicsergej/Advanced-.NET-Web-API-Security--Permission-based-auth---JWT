@@ -1,7 +1,9 @@
 ﻿using Application.Features.Identity.Commands;
 using Application.Features.Identity.Queries;
+using Common.Authorization;
 using Common.Requests.Identity;
 using Microsoft.AspNetCore.Mvc;
+using WebApi.Attributes;
 
 namespace WebApi.Controllers.Identity;
 
@@ -9,6 +11,7 @@ namespace WebApi.Controllers.Identity;
 public class UsersController : MyBaseController<UsersController>
 {
     [HttpPost]
+    [MustHavePermission(AppFeature.Users,AppAction.Create)]
     public async Task<IActionResult> RegisterUser([FromBody] UserRegistrationRequest userRegistration)
     {
         var response = await MediatorSender.Send(new UserRegistrationCommand { userRegistration = userRegistration });
@@ -21,6 +24,7 @@ public class UsersController : MyBaseController<UsersController>
     }
     
     [HttpPut]
+    [MustHavePermission(AppFeature.Users,AppAction.Update)]
     public async Task<IActionResult> UpdateUser([FromBody] UpdateUserRequest updateUser)
     {
         var response = await MediatorSender.Send(new UpdateUserCommand() { UpdateUser = updateUser });
@@ -33,6 +37,7 @@ public class UsersController : MyBaseController<UsersController>
     }
     
     [HttpPut("change-password")]
+    [MustHavePermission(AppFeature.Users,AppAction.Update)]
     public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest changePasswordRequest)
     {
         var response = await MediatorSender.Send(new ChangeUserPasswordCommand() { ChangePasswordRequest = changePasswordRequest });
@@ -45,6 +50,7 @@ public class UsersController : MyBaseController<UsersController>
     }
     
     [HttpPut("change-status")]
+    [MustHavePermission(AppFeature.Users,AppAction.Update)]
     public async Task<IActionResult> ChangeUserStatus([FromBody] ChangeUserStatusRequest changeUserStatus)
     {
         var response = await MediatorSender.Send(new ChangeUserStatusCommand() { ChangeUserStatusRequest = changeUserStatus });
@@ -57,6 +63,7 @@ public class UsersController : MyBaseController<UsersController>
     }
 
     [HttpGet("{userId}")]
+    [MustHavePermission(AppFeature.Users,AppAction.Read)]
     public async Task<IActionResult> GetUserById(string userId)
     {
         var response = await MediatorSender.Send(new GetUserByIdQuery() { UserId = userId });
@@ -69,6 +76,7 @@ public class UsersController : MyBaseController<UsersController>
     }
     
     [HttpGet]
+    [MustHavePermission(AppFeature.Users,AppAction.Read)]
     public async Task<IActionResult> GetAllUsers()
     {
         var response = await MediatorSender.Send(new GetAllUsersQuery());
@@ -81,6 +89,7 @@ public class UsersController : MyBaseController<UsersController>
     }
     
     [HttpGet("roles/{userId}")]
+    [MustHavePermission(AppFeature.Users,AppAction.Read)]
     public async Task<IActionResult> GetRoles(string userId)
     {
         var response = await MediatorSender.Send(new GetRolesQuery() { UserId = userId });
@@ -90,5 +99,18 @@ public class UsersController : MyBaseController<UsersController>
         }
 
         return NotFound(response);
+    }
+    
+    [HttpPut("user-roles")]
+    [MustHavePermission(AppFeature.Users, AppAction.Update)]
+    public async Task<IActionResult> UpdateUserRoles([FromBody] UpdateUserRolesRequest updateUserRoles)
+    {
+        var response = await MediatorSender.Send(new UpdateUserRolesCommand { UpdateUserRoles = updateUserRoles });
+        
+        if (response.IsSuccessful)
+        {
+            return Ok(response);
+        }
+        return BadRequest(response);
     }
 }
