@@ -1,8 +1,11 @@
 ﻿using Application.Services.Identity;
+using AutoMapper;
 using Common.Requests.Identity;
+using Common.Responses.Identity;
 using Common.Responses.Wrappers;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Services.Identity;
 
@@ -10,11 +13,13 @@ public class RoleService : IRoleService
 {
     private readonly RoleManager<ApplicationRole> _roleManager;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly IMapper _mapper;
 
-    public RoleService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager)
+    public RoleService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager, IMapper mapper)
     {
         _roleManager = roleManager;
         _userManager = userManager;
+        _mapper = mapper;
     }
     
     public async Task<IResponseWrapper> CreateRoleAsync(CreateRoleRequest request, CancellationToken cancellationToken)
@@ -39,7 +44,18 @@ public class RoleService : IRoleService
         
         return await ResponseWrapper<string>.FailAsync(GetIdentityResultErrorDescriptions(identityResult));
     }
-    
+
+    public async Task<IResponseWrapper> GetRolesAsync(CancellationToken cancellationToken)
+    {
+        var roles =  await _roleManager.Roles.ToListAsync(cancellationToken);
+
+        if (!roles.Any())
+        {
+            return await ResponseWrapper<string>.FailAsync("No roles found!");
+        }
+        return await ResponseWrapper<List<RoleResponse>>.SuccessAsync(_mapper.Map<List<RoleResponse>>(roles));
+    }
+
     private List<string> GetIdentityResultErrorDescriptions(IdentityResult identityResult)
     {
         var errorDescriptions = new List<string>();
