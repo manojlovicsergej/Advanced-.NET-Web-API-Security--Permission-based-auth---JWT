@@ -16,13 +16,14 @@ public class RoleService : IRoleService
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IMapper _mapper;
 
-    public RoleService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager, IMapper mapper)
+    public RoleService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager,
+        IMapper mapper)
     {
         _roleManager = roleManager;
         _userManager = userManager;
         _mapper = mapper;
     }
-    
+
     public async Task<IResponseWrapper> CreateRoleAsync(CreateRoleRequest request, CancellationToken cancellationToken)
     {
         var existingRole = await _roleManager.FindByNameAsync(request.RoleName);
@@ -42,18 +43,19 @@ public class RoleService : IRoleService
         {
             return await ResponseWrapper<string>.SuccessAsync("Role successfully created!");
         }
-        
+
         return await ResponseWrapper<string>.FailAsync(GetIdentityResultErrorDescriptions(identityResult));
     }
 
     public async Task<IResponseWrapper> GetRolesAsync(CancellationToken cancellationToken)
     {
-        var roles =  await _roleManager.Roles.ToListAsync(cancellationToken);
+        var roles = await _roleManager.Roles.ToListAsync(cancellationToken);
 
         if (!roles.Any())
         {
             return await ResponseWrapper<string>.FailAsync("No roles found!");
         }
+
         return await ResponseWrapper<List<RoleResponse>>.SuccessAsync(_mapper.Map<List<RoleResponse>>(roles));
     }
 
@@ -73,6 +75,55 @@ public class RoleService : IRoleService
         {
             return await ResponseWrapper<string>.SuccessAsync("Role updated successfully!");
         }
+
+        return await ResponseWrapper<string>.FailAsync(GetIdentityResultErrorDescriptions(identityResult));
+    }
+
+    public async Task<IResponseWrapper> GetRoleByIdAsync(string roleId, CancellationToken cancellationToken)
+    {
+        var role = await _roleManager.FindByIdAsync(roleId);
+
+        if (role is null)
+        {
+            return await ResponseWrapper<string>.FailAsync("Role does not exist.");
+        }
+
+        return await ResponseWrapper<RoleResponse>.SuccessAsync(_mapper.Map<RoleResponse>(role));
+    }
+
+    public async Task<IResponseWrapper> DeleteRoleAsync(string roleId, CancellationToken cancellationToken)
+    {
+        var role = await _roleManager.FindByIdAsync(roleId);
+
+        if (role is null)
+        {
+            return await ResponseWrapper<string>.FailAsync("Role does not exist.");
+        }
+
+        if (role.Name != AppRoles.Admin)
+        {
+            var allUsers = await _userManager.Users.ToListAsync(cancellationToken);
+
+            foreach (var user in allUsers)
+            {
+                if (await _userManager.IsInRoleAsync(user, role.Name))
+                {
+                    return await ResponseWrapper<string>.FailAsync($"Role: {role.Name} is currently assigned to user.");
+                }
+            }
+        }
+        else
+        {
+            return await ResponseWrapper<string>.FailAsync("Cannot delete Admin role.");
+        }
+
+        var identityResult = await _roleManager.DeleteAsync(role);
+
+        if (identityResult.Succeeded)
+        {
+            return await ResponseWrapper<string>.SuccessAsync("Role successfully deleted.");
+        }
+
         return await ResponseWrapper<string>.FailAsync(GetIdentityResultErrorDescriptions(identityResult));
     }
 
@@ -81,7 +132,7 @@ public class RoleService : IRoleService
         var errorDescriptions = new List<string>();
         foreach (var error in identityResult.Errors)
         {
-            errorDescriptions.Add(error.Description);            
+            errorDescriptions.Add(error.Description);
         }
 
         return errorDescriptions;
