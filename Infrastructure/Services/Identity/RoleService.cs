@@ -1,5 +1,6 @@
 ﻿using Application.Services.Identity;
 using AutoMapper;
+using Common.Authorization;
 using Common.Requests.Identity;
 using Common.Responses.Identity;
 using Common.Responses.Wrappers;
@@ -54,6 +55,25 @@ public class RoleService : IRoleService
             return await ResponseWrapper<string>.FailAsync("No roles found!");
         }
         return await ResponseWrapper<List<RoleResponse>>.SuccessAsync(_mapper.Map<List<RoleResponse>>(roles));
+    }
+
+    public async Task<IResponseWrapper> UpdateRoleAsync(UpdateRoleRequest request, CancellationToken cancellationToken)
+    {
+        var role = await _roleManager.FindByIdAsync(request.RoleId);
+        if (role is null || role.Name == AppRoles.Admin)
+        {
+            return await ResponseWrapper<string>.FailAsync("Role does not exist.");
+        }
+
+        role.Name = request.RoleName;
+        role.Description = request.RoleDescription;
+
+        var identityResult = await _roleManager.UpdateAsync(role);
+        if (identityResult.Succeeded)
+        {
+            return await ResponseWrapper<string>.SuccessAsync("Role updated successfully!");
+        }
+        return await ResponseWrapper<string>.FailAsync(GetIdentityResultErrorDescriptions(identityResult));
     }
 
     private List<string> GetIdentityResultErrorDescriptions(IdentityResult identityResult)
