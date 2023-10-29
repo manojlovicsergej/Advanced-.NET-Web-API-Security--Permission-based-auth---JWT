@@ -4,6 +4,7 @@ using Common.Authorization;
 using Common.Requests.Identity;
 using Common.Responses.Identity;
 using Common.Responses.Wrappers;
+using Infrastructure.Context;
 using Infrastructure.Models;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -14,14 +15,16 @@ public class RoleService : IRoleService
 {
     private readonly RoleManager<ApplicationRole> _roleManager;
     private readonly UserManager<ApplicationUser> _userManager;
+    private readonly ApplicationDbContext _applicationDbContext;
     private readonly IMapper _mapper;
 
     public RoleService(RoleManager<ApplicationRole> roleManager, UserManager<ApplicationUser> userManager,
-        IMapper mapper)
+        IMapper mapper, ApplicationDbContext applicationDbContext)
     {
         _roleManager = roleManager;
         _userManager = userManager;
         _mapper = mapper;
+        _applicationDbContext = applicationDbContext;
     }
 
     public async Task<IResponseWrapper> CreateRoleAsync(CreateRoleRequest request, CancellationToken cancellationToken)
@@ -125,6 +128,80 @@ public class RoleService : IRoleService
         }
 
         return await ResponseWrapper<string>.FailAsync(GetIdentityResultErrorDescriptions(identityResult));
+    }
+
+    public async Task<IResponseWrapper> GetPermissionsAsync(string roleId, CancellationToken cancellationToken)
+    {
+        var role = await _roleManager.FindByIdAsync(roleId);
+
+        if (role is null)
+        {
+            return await ResponseWrapper<string>.FailAsync("Role not found!");
+        }
+
+        var allPermission = AppPermissions.AllPermissions;
+        var roleClaimResponse = new RoleClaimResponse
+        {
+            Role = new()
+            {
+                Id = roleId,
+                Name = role.Name,
+                Description = role.Description
+            },
+            RoleClaims = new()
+        };
+
+        var currentRoleClaims = await GetAllClaimsForRoleAsync(roleId, cancellationToken);
+
+        var allPermissionsNames = allPermission.Select(x => x.Name).ToList();
+        var currentRoleClaimsValues = currentRoleClaims.Select(x => x.ClaimValue).ToList();
+
+        var currentlyAssignedRoleClaimsNames = allPermissionsNames.Intersect(currentRoleClaimsValues).ToList();
+
+        foreach (var permission in allPermission)
+        {
+            if (currentlyAssignedRoleClaimsNames.Any(x => x == permission.Name))
+            {
+                roleClaimResponse.RoleClaims.Add(new RoleClaimViewModel()
+                {
+                    RoleId = roleId,
+                    ClaimType = AppClaim.Permission,
+                    ClaimValue = permission.Name,
+                    Description = permission.Description,
+                    Group = permission.Group,
+                    IsAssignedToRole = true,
+                });
+            }
+            else
+            {
+                roleClaimResponse.RoleClaims.Add(new RoleClaimViewModel()
+                {
+                    RoleId = roleId,
+                    ClaimType = AppClaim.Permission,
+                    ClaimValue = permission.Name,
+                    Description = permission.Description,
+                    Group = permission.Group,
+                    IsAssignedToRole = false,
+                });
+            }
+        }
+
+        return await ResponseWrapper<RoleClaimResponse>.SuccessAsync(roleClaimResponse);
+    }
+
+    private async Task<List<RoleClaimViewModel>> GetAllClaimsForRoleAsync(string roleId,
+        CancellationToken cancellationToken)
+    {
+        var claims = await _applicationDbContext.RoleClaims
+            .Where(x => x.RoleId == roleId)
+            .ToListAsync(cancellationToken);
+
+        if (claims.Any())
+        {
+            return _mapper.Map<List<RoleClaimViewModel>>(claims);
+        }
+
+        return new List<RoleClaimViewModel>();
     }
 
     private List<string> GetIdentityResultErrorDescriptions(IdentityResult identityResult)

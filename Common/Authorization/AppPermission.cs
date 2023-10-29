@@ -38,4 +38,7 @@ public class AppPermissions
     public static IReadOnlyList<AppPermission> AdminPermissions { get; } = new ReadOnlyCollection<AppPermission>(_all.Where(p => !p.IsBasic).ToArray());
     
     public static IReadOnlyList<AppPermission> BasicPermissions { get; } = new ReadOnlyCollection<AppPermission>(_all.Where(p => p.IsBasic).ToArray());
+
+    public static IReadOnlyList<AppPermission> AllPermissions { get; } =
+        new ReadOnlyCollection<AppPermission>(_all);
 }

@@ -10,4 +10,5 @@ public interface IRoleService
     Task<IResponseWrapper> UpdateRoleAsync(UpdateRoleRequest request,CancellationToken cancellationToken);
     Task<IResponseWrapper> GetRoleByIdAsync(string roleId,CancellationToken cancellationToken);
     Task<IResponseWrapper> DeleteRoleAsync(string roleId,CancellationToken cancellationToken);
+    Task<IResponseWrapper> GetPermissionsAsync(string roleId,CancellationToken cancellationToken);
 }
