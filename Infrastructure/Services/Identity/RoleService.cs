@@ -189,6 +189,44 @@ public class RoleService : IRoleService
         return await ResponseWrapper<RoleClaimResponse>.SuccessAsync(roleClaimResponse);
     }
 
+    public async Task<IResponseWrapper> UpdateRolePermissionsAsync(UpdateRolePermissionsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var role = await _roleManager.FindByIdAsync(request.RoleId);
+
+        if (role is null)
+        {
+            return await ResponseWrapper<string>.FailAsync("Role does not exists.");
+        }
+
+        if (role.Name == AppRoles.Admin)
+        {
+            return await ResponseWrapper<string>.FailAsync("Cannot change permissions for admin.");
+        }
+
+        var permissionsToBeAssigned = request.RoleClaims
+            .Where(x => x.IsAssignedToRole)
+            .ToList();
+
+        var currentlyAssignedClaims = await _roleManager.GetClaimsAsync(role);
+
+        // drop
+        foreach (var claim in currentlyAssignedClaims)
+        {
+            await _roleManager.RemoveClaimAsync(role, claim);
+        }
+
+        // add
+        foreach (var claim in permissionsToBeAssigned)
+        {
+            var roleClaim = _mapper.Map<ApplicationRoleClaim>(claim);
+            await _applicationDbContext.RoleClaims.AddAsync(roleClaim, cancellationToken);
+        }
+
+        await _applicationDbContext.SaveChangesAsync(cancellationToken);
+        return await ResponseWrapper<string>.SuccessAsync("Role permission updated successfully.");
+    }
+
     private async Task<List<RoleClaimViewModel>> GetAllClaimsForRoleAsync(string roleId,
         CancellationToken cancellationToken)
     {

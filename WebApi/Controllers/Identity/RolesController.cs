@@ -75,4 +75,17 @@ public class RolesController : MyBaseController<RolesController>
 
         return NotFound(response);
     }
+    
+    [HttpPut("update-permissions")]
+    [MustHavePermission(AppFeature.RoleClaims, AppAction.Update)]
+    public async Task<IActionResult> UpdateRolePermissions([FromBody] UpdateRolePermissionsRequest request)
+    {
+        var response = await MediatorSender.Send(new UpdateRolePermissionsCommand { UpdateRolePermissionsRequest = request });
+        if (response.IsSuccessful)
+        {
+            return Ok(response);
+        }
+
+        return BadRequest(response);
+    }
 }
