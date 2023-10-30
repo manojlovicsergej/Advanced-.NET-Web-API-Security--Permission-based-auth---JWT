@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using Application.Pipelines;
+using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -13,6 +14,7 @@ public static class ServiceCollectionExtensions
         return services
             .AddMediatR(assembly)
             .AddAutoMapper(assembly)
+            .AddValidatorsFromAssembly(Assembly.GetExecutingAssembly())
             .AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationPipelineBehaviour<,>));
     }
 }
