@@ -1,11 +1,12 @@
-﻿using Application.Services.Identity;
+﻿using Application.Pipelines;
+using Application.Services.Identity;
 using Common.Requests.Identity;
 using Common.Responses.Wrappers;
 using MediatR;
 
 namespace Application.Features.Identity.Commands;
 
-public class UserRegistrationCommand : IRequest<IResponseWrapper>
+public class UserRegistrationCommand : IRequest<IResponseWrapper>, IValidateMe
 {
     public UserRegistrationRequest userRegistration { get; set; }
 }

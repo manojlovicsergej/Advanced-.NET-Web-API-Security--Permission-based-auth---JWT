@@ -1,19 +1,12 @@
-﻿using Application.Services;
-using Common.Requests.Employees;
-using Domain;
+﻿using Common.Requests.Employees;
 using FluentValidation;
 
 namespace Application.Features.Employees.Validators;
 
-public class UpdateEmployeeRequestValidator : AbstractValidator<UpdateEmployeeRequest>
+public class CreateEmployeeRequestValidator : AbstractValidator<CreateEmployeeRequest>
 {
-    public UpdateEmployeeRequestValidator(IEmployeeService employeeService)
+    public CreateEmployeeRequestValidator()
     {
-        RuleFor(request => request.Id)
-            .MustAsync(async (id, ct) => await employeeService.GetEmployeeByIdAsync(id, ct)
-                is Employee employee && employee.Id == id)
-            .WithMessage("Employee does not exist.");
-
         RuleFor(x => x.FirstName)
             .NotEmpty().WithMessage("Employee firstname is required.")
             .MaximumLength(60);

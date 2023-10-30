@@ -1,4 +1,5 @@
-﻿using Application.Services;
+﻿using Application.Pipelines;
+using Application.Services;
 using AutoMapper;
 using Common.Requests.Employees;
 using Common.Responses.Employees;
@@ -8,7 +9,7 @@ using MediatR;
 
 namespace Application.Features.Employees.Commands;
 
-public class CreateEmployeeCommand : IRequest<IResponseWrapper>
+public class CreateEmployeeCommand : IRequest<IResponseWrapper>, IValidateMe
 {
     public CreateEmployeeRequest CreateEmployeeRequest { get; set; }
 }

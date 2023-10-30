@@ -231,6 +231,18 @@ public class UserService : IUserService
         return await ResponseWrapper.FailAsync("User Roles update not permitted.");
     }
 
+    public async Task<IResponseWrapper<UserResponse>> GetUserByEmailAsync(string email, CancellationToken cancellationToken)
+    {
+        var user = await _userManager.FindByEmailAsync(email);
+
+        if (user is null)
+        {
+            return await ResponseWrapper<UserResponse>.FailAsync("User does not exist.");
+        }
+
+        return await ResponseWrapper<UserResponse>.SuccessAsync(_mapper.Map<UserResponse>(user));
+    }
+
     private List<string> GetIdentityResultErrorDescriptions(IdentityResult identityResult)
     {
         var errorDescriptions = new List<string>();
