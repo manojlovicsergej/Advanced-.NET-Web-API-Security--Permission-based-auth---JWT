@@ -1,4 +1,5 @@
 ﻿using Application.Exceptions;
+using Common.Responses.Wrappers;
 using FluentValidation;
 using MediatR;
 
@@ -40,7 +41,7 @@ public class ValidationPipelineBehaviour<TRequest, TResponse> : IPipelineBehavio
                 errors.Add(failure.ErrorMessage);
             }
 
-            throw new CustomValidationException(errors, "One or more validation failure(s) occured.");
+            return (TResponse)await ResponseWrapper.FailAsync(errors);
         }
         
         return await next();

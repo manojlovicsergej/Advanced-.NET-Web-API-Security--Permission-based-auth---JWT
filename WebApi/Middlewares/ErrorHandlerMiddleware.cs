@@ -1,7 +1,7 @@
 ﻿using System.Net;
 using System.Text.Json;
 using Application.Exceptions;
-using Common.Responses;
+using Common.Responses.Wrappers;
 
 namespace WebApi.Middlewares;
 
@@ -24,23 +24,20 @@ public class ErrorHandlerMiddleware
         {
             var response = httpContext.Response;
             response.ContentType = "application/json";
-
-            Error error = new();
+            
+            var responseWrapper = await ResponseWrapper<string>.FailAsync(e.Message);
 
             switch (e)
             {
                 case CustomValidationException vex:
                     response.StatusCode = (int)HttpStatusCode.BadRequest;
-                    error.FriendlyErrorMessage = vex.FriendlyErrorMessage;
-                    error.ErrorMessages = vex.ErrorMessages;
                     break;
                 default:
                     response.StatusCode = (int)HttpStatusCode.InternalServerError;
-                    error.FriendlyErrorMessage = e.Message;
                     break;
             }
 
-            var result = JsonSerializer.Serialize(error);
+            var result = JsonSerializer.Serialize(responseWrapper);
             await response.WriteAsync(result);
         }
     }
