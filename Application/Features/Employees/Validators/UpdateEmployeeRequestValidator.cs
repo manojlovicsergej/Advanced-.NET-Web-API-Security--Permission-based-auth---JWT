@@ -23,6 +23,7 @@ public class UpdateEmployeeRequestValidator : AbstractValidator<UpdateEmployeeRe
             .MaximumLength(60);
 
         RuleFor(x => x.Email)
+            .EmailAddress()
             .NotEmpty().WithMessage("Employee email is required.")
             .MaximumLength(100);
 

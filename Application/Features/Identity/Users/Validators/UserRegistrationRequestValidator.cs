@@ -10,6 +10,9 @@ public class UserRegistrationRequestValidator : AbstractValidator<UserRegistrati
     public UserRegistrationRequestValidator(IUserService userService)
     {
         RuleFor(request => request.Email)
+            .EmailAddress()
+            .NotEmpty()
+            .MaximumLength(256)
             .MustAsync(async (email, ct) => await userService.GetUserByEmailAsync(email, ct)
                 is not  UserResponse user)
             .WithMessage("Email already taken.");

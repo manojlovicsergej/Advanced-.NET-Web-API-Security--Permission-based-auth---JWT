@@ -9,7 +9,6 @@ public class ValidationPipelineBehaviour<TRequest, TResponse> : IPipelineBehavio
 {
     private readonly IEnumerable<IValidator<TRequest>> _validators;
     
-
     public ValidationPipelineBehaviour()
     {
         _validators = _validators;
@@ -24,19 +23,26 @@ public class ValidationPipelineBehaviour<TRequest, TResponse> : IPipelineBehavio
         }
 
         var context = new ValidationContext<TRequest>(request);
-        List<string> errors = new();
+        
         var validationResults = await Task
             .WhenAll(_validators
                 .Select(x => x.ValidateAsync(context, cancellationToken)));
-        var failures = validationResults.SelectMany(x => x.Errors)
-            .Where(z => z != null)
-            .ToList();
 
-        foreach (var failure in failures)
+        if (!validationResults.Any(x => x.IsValid))
         {
-            errors.Add(failure.ErrorMessage);
-        }
+            List<string> errors = new();
+            var failures = validationResults.SelectMany(x => x.Errors)
+                .Where(z => z != null)
+                .ToList();
 
-        throw new CustomValidationException(errors, "One or more validation failure(s) occured.");
+            foreach (var failure in failures)
+            {
+                errors.Add(failure.ErrorMessage);
+            }
+
+            throw new CustomValidationException(errors, "One or more validation failure(s) occured.");
+        }
+        
+        return await next();
     }
 }
